@@ -1,0 +1,39 @@
+$mod -> defaulted to Alt
+
+Changing the Container Layout
+    splith/splitv (toggles): $mod+e
+    stacking: $mod+s
+    tabbed: $mod+w
+
+Toggling Fullscreen Mode for a Window
+    $mod+f
+global fullscreen mode (span all available outputs) (command): 
+    fullscreen toggle global
+
+Opening Other Apps
+    dmenu (to open apps from a terminal)
+        $mod+d
+            Type name (or part) of app you want to open
+            App has to be in $PATH to work
+
+Closing Windows
+    $mod+Shift+q
+
+Using Workspaces
+    Switch Workspace
+        $mod+num
+
+Moving Windows to Workspaces
+    $mod+Shift+num
+
+Resizing
+    Can use [binding_modes] to define a mode for resizing via keyboard
+
+Restarting i3 Inplace
+    $mod+Shift+r
+
+Exiting i3
+    Cleanly exit w/o killing your X server: $mod+Shift+e
+
+Floating
+    Toggle floating mode for a window: $mod+Shift+Space
