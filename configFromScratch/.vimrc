@@ -65,3 +65,35 @@ vnoremap <A-k> :m '<-2<CR>gv=gv
 
 imap jk <ESC>
 cnoremap jk <ESC>
+
+call plug#begin('~/.vim/plugged')
+    Plug 'neovim/nvim-lspconfig'
+    Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
+    Plug 'tbodt/deoplete-tabnine', { 'do': './install.sh' }
+
+    Plug 'vim-airline/vim-airline'
+    Plug 'vim-airline/vim-airline-themes'
+
+    Plug 'jiangmiao/auto-pairs'
+    Plug 'scrooloose/nerdcommenter'
+
+    Plug 'scrooloose/nerdtree'
+
+    Plug 'neoclide/coc.nvim', { 'branch': 'release' }
+
+    Plug 'sheerun/vim-polyglot'
+    Plug 'dense-analysis/ale'
+call plug#end()
+let g:deoplete#enable_at_startup = 1
+let g:airline_theme = 'raven'
+
+let NERDTreeShowHidden=1
+
+let g:airline#extensions#ale#enabled=1
+
+nnoremap <silent> <C-k><C-B> :NERDTreeToggle<CR>
+
+inoremap <silent><expr><tab> pumvisible() ? "\<c-n>" : "\<tab>"
+inoremap <silent><expr><s-tab> pumvisible() ? "\<c-p>" : "\<s-tab>"
+
+autocmd InsertLeave,CompleteDone * if pumvisible() == 0 | pclose | endif
