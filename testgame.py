@@ -1,6 +1,9 @@
 import os
 import pygame as pg
 
+import pprint
+import random
+
 main_dir = os.path.split(os.path.abspath(__file__))[0]
 data_dir = os.path.join(main_dir, "data")
 
@@ -15,7 +18,13 @@ SCREEN_DIMENSIONS = (SCREEN_WIDTH, SCREEN_HEIGHT)
 NUM_ROWS = SCREEN_HEIGHT // TILE_HEIGHT
 NUM_COLS = SCREEN_WIDTH // TILE_WIDTH
 
-FONT_SIZE = 12
+NUM_TILES = NUM_ROWS * NUM_COLS
+print(NUM_TILES)
+
+NUM_MINES = NUM_TILES // 8
+print(NUM_MINES)
+
+FONT_SIZE = 21
 
 
 def draw_tiles():
@@ -35,6 +44,13 @@ def main():
 
     tile_labels = {}
 
+    board_state = [[''] * NUM_COLS for _ in range(NUM_ROWS)]
+
+    for i in range(NUM_MINES):
+        mine_row = random.randint(0, NUM_ROWS-1)
+        mine_col = random.randint(0, NUM_COLS-1)
+        board_state[mine_row][mine_col] = '*'
+
     tile_label = None
     for i in range(NUM_ROWS):
         for j in range(NUM_COLS):
@@ -47,8 +63,9 @@ def main():
             pg.draw.rect(background, 'gray', new_tile)
 
             # Draw Text
-            tile_label = pg.font.Font.render(default_font, "A", False, 'blue')
-            tile_labels[(target_left, target_top)] = tile_label
+            if board_state[i][j] == '*':
+                tile_label = pg.font.Font.render(default_font, "*", False, 'blue')
+                tile_labels[(target_left + (TILE_WIDTH // 4), target_top + (TILE_HEIGHT // 4))] = tile_label
 
     is_running = True
     while is_running:
