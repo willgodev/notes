@@ -32,22 +32,26 @@ def main():
     pg.font.init()
     default_font = pg.font.SysFont("arial", FONT_SIZE)
 
-    def draw_tiles():
+    def draw_tiles(show_labels=False):
         for i in range(NUM_ROWS):
             for j in range(NUM_COLS):
                 # tile_number = (i * NUM_COLS) + j
                 tile_label = None
-
-                # Draw Tile
                 target_top = (i * TILE_HEIGHT)
                 target_left = (j * TILE_WIDTH)
                 new_tile = pg.Rect((target_left, target_top), TILE_DIMENSIONS)
-                pg.draw.rect(background, 'gray', new_tile)
 
-                # Draw Text
-                if board_state[i][j] == '*':
-                    tile_label = pg.font.Font.render(default_font, "*", False, 'blue')
-                    tile_labels[(target_left + (TILE_WIDTH // 4), target_top + (TILE_HEIGHT // 4))] = tile_label
+                # Draw Tile
+                if board_state[i][j] == '' or board_state[i][j] == '*':
+                    pg.draw.rect(background, 'gray', new_tile)
+                elif board_state[i][j] == 'x':
+                    pg.draw.rect(background, 'black', new_tile)
+
+                if show_labels:
+                    # Draw Text
+                    if board_state[i][j] == '*':
+                        tile_label = pg.font.Font.render(default_font, "*", False, 'blue')
+                        tile_labels[(target_left + (TILE_WIDTH // 4), target_top + (TILE_HEIGHT // 4))] = tile_label
 
     def set_mines():
         for _ in range(NUM_MINES):
@@ -74,14 +78,23 @@ def main():
     draw_tiles()
 
     is_running = True
+    did_lose = False
     while is_running:
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 is_running = False
             elif event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE:
                 is_running = False
-            elif event.type == pg.MOUSEBUTTONDOWN:
-                selected_tile = pos_to_tile_index(pg.mouse.get_pos())
+            elif event.type == pg.MOUSEBUTTONDOWN and not did_lose:
+                selected_row, selected_col = pos_to_tile_index(pg.mouse.get_pos())
+                selected_tile_marker = board_state[selected_row][selected_col]
+                if selected_tile_marker == '*':
+                    did_lose = True
+                    draw_tiles(True)
+                else:
+                    board_state[selected_row][selected_col] = 'x'
+                    draw_tiles()
+
 
         screen.blit(background, (0, 0))
 
