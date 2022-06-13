@@ -104,8 +104,8 @@ def main():
         new_tile = pg.Rect((target_left, target_top), TILE_DIMENSIONS)
         number_font = pg.font.SysFont("arial", 14)
         selection = [(row, col)]
-        board_state[row][col] = 'x'
         if selected_tile_marker == '0':
+            board_state[row][col] = 'x'
             selection += get_selection_span(row, col)
             for selected_tile in selection:
                 selected_tile_marker = board_state[selected_tile[0]][selected_tile[1]]
@@ -119,9 +119,9 @@ def main():
                         tile_labels[(target_left + (TILE_WIDTH // 4), target_top + (TILE_HEIGHT // 8))] = tile_label
         else:
             pg.draw.rect(background, 'black', new_tile)
-            tile_label = pg.font.Font.render(number_font, selected_tile_marker, False, 'blue')
-            tile_labels[(target_left + (TILE_WIDTH // 4), target_top + (TILE_HEIGHT // 8))] = tile_label
-
+            if selected_tile_marker != 'x':
+                tile_label = pg.font.Font.render(number_font, selected_tile_marker, False, 'blue')
+                tile_labels[(target_left + (TILE_WIDTH // 4), target_top + (TILE_HEIGHT // 8))] = tile_label
 
     def get_selection_span(row, col):
         frontier = [(row, col)]
