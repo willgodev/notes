@@ -45,6 +45,7 @@ def main():
     default_font = pg.font.SysFont("arial", FONT_SIZE)
 
     tile_labels = {}
+    flags = {}
 
     board_state = [['0'] * NUM_COLS for _ in range(NUM_ROWS)]
 
@@ -142,6 +143,14 @@ def main():
                         frontier.append((peek_tile_row, peek_tile_col))
         return selection_span
 
+    def handle_flag_selection(row, col):
+        if board_state[row][col] == '0':
+            target_top = (row * TILE_HEIGHT)
+            target_left = (col * TILE_WIDTH)
+            number_font = pg.font.SysFont("arial", 14)
+            tile_label = pg.font.Font.render(number_font, '!', False, 'blue')
+            tile_labels[(target_left + (TILE_WIDTH // 4), target_top + (TILE_HEIGHT // 8))] = tile_label
+
     def pos_to_tile_index(pos):
         row = pos[1] // TILE_WIDTH
         col = pos[0] // TILE_HEIGHT
@@ -163,17 +172,23 @@ def main():
             elif event.type == pg.MOUSEBUTTONDOWN and not did_lose:
                 selected_row, selected_col = pos_to_tile_index(pg.mouse.get_pos())
                 selected_tile_marker = board_state[selected_row][selected_col]
-                if selected_tile_marker == '*':
-                    did_lose = True
-                    draw_tiles(True)
-                else:
-                    handle_tile_selection(selected_row, selected_col)
-                    draw_tiles()
+                if event.button == 1:
+                    if selected_tile_marker == '*':
+                        did_lose = True
+                        draw_tiles(True)
+                    else:
+                        handle_tile_selection(selected_row, selected_col)
+                        draw_tiles()
+                if event.button == 3:
+                    print('right click')
+                    handle_flag_selection(selected_row, selected_col)
 
         screen.blit(background, (0, 0))
 
         for tile_loc, tile_label in tile_labels.items():
             screen.blit(tile_label, tile_loc)
+        for flag_loc, flag_label in flags:
+            screen.blit(flag_label, flag_loc)
 
         pg.display.flip()
 
