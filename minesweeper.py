@@ -47,11 +47,17 @@ class Tile():
 
         self.is_mine = False
         self.proximity = 0
-        self.isRevealed = False
+        self.is_revealed = False
 
         self.label = None
 
         self.render_rect = pg.Rect((self.left_draw_pt, self.top_draw_pt), TILE_DIMENSIONS)
+
+    def __str__(self):
+        return f'TILE ({self.row}, {self.col}) \n \
+               Mine?: {self.is_mine} \n \
+               Proximity: {self.proximity} \n \
+               Revealed?: {self.is_revealed} \n'
 
 class Minesweeper:
     def __init__(self):
@@ -70,6 +76,11 @@ class Minesweeper:
                 tile_row.append(new_tile)
             self.board.append(tile_row)
 
+        self.lay_mines()
+        self.calculate_mine_proximities()
+        for i in range(NUM_ROWS):
+            for j in range(NUM_COLS):
+                print(self.board[i][j])
         self.draw_tiles()
 
         self.is_running = True
@@ -78,8 +89,32 @@ class Minesweeper:
     def draw_tiles(self):
         for i in range(NUM_ROWS):
             for j in range(NUM_COLS):
-                # Draw Tile
-                pg.draw.rect(self.background, 'gray', self.board[i][j].render_rect)
+                if not self.board[i][j].is_revealed:
+                    # Draw Tile
+                    pg.draw.rect(self.background, 'gray', self.board[i][j].render_rect)
+
+    def lay_mines(self):
+        for _ in range(NUM_MINES):
+            mine_row = random.randint(0, NUM_ROWS-1)
+            mine_col = random.randint(0, NUM_COLS-1)
+            self.board[mine_row][mine_col].is_mine = True
+
+    def calculate_mine_proximities(self):
+        for i in range(len(self.board)):
+            for j in range(len(self.board[0])):
+                if self.board[i][j].is_mine:
+                    for direction in DIRECTIONS:
+                        check_row = i + direction[0]
+                        check_col = j + direction[1]
+                        if self.is_pos_within_board(check_row, check_col, self.board) and \
+                            not self.board[check_row][check_col].is_mine:
+                            self.board[check_row][check_col].proximity += 1
+
+    def is_pos_within_board(self, row, col, board):
+        if 0 <= row < len(board) and \
+           0 <= col < len(board[0]):
+            return True
+        return False
 
     def pos_to_tile_index(self, pos):
         row = pos[1] // TILE_WIDTH
@@ -95,8 +130,10 @@ class Minesweeper:
                     self.is_running = False
                 elif event.type == pg.MOUSEBUTTONDOWN and not self.did_lose:
                     selected_row, selected_col = self.pos_to_tile_index(pg.mouse.get_pos())
-                    self.draw_tiles()
+                    if self.board[selected_row][selected_col].is_mine:
+                        did_lose = True
 
+            self.draw_tiles()
             self.screen.blit(self.background, (0, 0))
             pg.display.flip()
 
