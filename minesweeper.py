@@ -28,14 +28,15 @@ TILE_NUM_VALUES = [str(x) for x in range(9)]
 
 DIRECTIONS = [
     (-1, -1),  # North West
-    (-1, 0),   # North
-    (-1, 1),   # North East
-    (0, -1),   # West
-    (0, 1),    # East
-    (1, -1),   # South West
-    (1, 0),    # South
-    (1, 1)     # South East
+    (-1, 0),  # North
+    (-1, 1),  # North East
+    (0, -1),  # West
+    (0, 1),  # East
+    (1, -1),  # South West
+    (1, 0),  # South
+    (1, 1)  # South East
 ]
+
 
 class Tile():
     def __init__(self, row, col):
@@ -44,6 +45,10 @@ class Tile():
 
         self.top_draw_pt = row * TILE_HEIGHT
         self.left_draw_pt = col * TILE_WIDTH
+
+        self.label_left_draw_pt = self.left_draw_pt + (TILE_WIDTH // 4)
+        self.label_top_draw_pt = self.top_draw_pt + (TILE_HEIGHT // 8)
+        self.label_draw_loc = (self.label_left_draw_pt, self.label_top_draw_pt)
 
         self.is_mine = False
         self.proximity = 0
@@ -59,10 +64,14 @@ class Tile():
                Proximity: {self.proximity} \n \
                Revealed?: {self.is_revealed} \n'
 
+
 class Minesweeper:
     def __init__(self):
         DEFAULT_FONT = pg.font.SysFont("arial", FONT_SIZE)
         pg.display.set_caption("Minesweeper")
+
+        self.NUMBER_FONT = pg.font.SysFont("arial", 14)
+        self.MINE_FONT = pg.font.SysFont("arial", 21)
 
         self.screen = pg.display.set_mode(SCREEN_DIMENSIONS)
         self.background = pg.Surface(self.screen.get_size()).convert()
@@ -93,11 +102,25 @@ class Minesweeper:
                     # Draw Tile
                     pg.draw.rect(self.background, 'gray', self.board[i][j].render_rect)
 
+    def draw_labels(self):
+        for i in range(NUM_ROWS):
+            for j in range(NUM_COLS):
+                if self.board[i][j].is_revealed:
+                    self.screen.blit(self.board[i][j].label, self.board[i][j].label_draw_loc)
+
+    def show_mines(self):
+        for i in range(NUM_ROWS):
+            for j in range(NUM_COLS):
+                if self.board[i][j].is_mine:
+                    self.board[i][j].is_revealed = True
+
+
     def lay_mines(self):
         for _ in range(NUM_MINES):
-            mine_row = random.randint(0, NUM_ROWS-1)
-            mine_col = random.randint(0, NUM_COLS-1)
+            mine_row = random.randint(0, NUM_ROWS - 1)
+            mine_col = random.randint(0, NUM_COLS - 1)
             self.board[mine_row][mine_col].is_mine = True
+            self.board[mine_row][mine_col].label = pg.font.Font.render(self.MINE_FONT, '*', False, 'red')
 
     def calculate_mine_proximities(self):
         for i in range(len(self.board)):
@@ -107,12 +130,14 @@ class Minesweeper:
                         check_row = i + direction[0]
                         check_col = j + direction[1]
                         if self.is_pos_within_board(check_row, check_col, self.board) and \
-                            not self.board[check_row][check_col].is_mine:
+                                not self.board[check_row][check_col].is_mine:
                             self.board[check_row][check_col].proximity += 1
+                            self.board[check_row][check_col].label = \
+                                pg.font.Font.render(self.NUMBER_FONT, str(self.board[check_row][check_col].proximity), False, 'blue')
 
     def is_pos_within_board(self, row, col, board):
         if 0 <= row < len(board) and \
-           0 <= col < len(board[0]):
+                0 <= col < len(board[0]):
             return True
         return False
 
@@ -130,12 +155,16 @@ class Minesweeper:
                     self.is_running = False
                 elif event.type == pg.MOUSEBUTTONDOWN and not self.did_lose:
                     selected_row, selected_col = self.pos_to_tile_index(pg.mouse.get_pos())
+                    print(self.board[selected_row][selected_col])
                     if self.board[selected_row][selected_col].is_mine:
-                        did_lose = True
+                        self.did_lose = True
+                        self.show_mines()
 
             self.draw_tiles()
             self.screen.blit(self.background, (0, 0))
+            self.draw_labels()
             pg.display.flip()
+
 
 def main():
     pg.init()
@@ -143,6 +172,7 @@ def main():
 
     minesweeper = Minesweeper()
     minesweeper.run()
+
 
 if __name__ == "__main__":
     main()
