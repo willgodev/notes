@@ -7,8 +7,10 @@ TILE_WIDTH = 17
 TILE_HEIGHT = 17
 TILE_DIMENSIONS = (TILE_WIDTH - 1, TILE_HEIGHT - 1)
 
-SCREEN_WIDTH = 1600
-SCREEN_HEIGHT = 800
+# SCREEN_WIDTH = 1600
+# SCREEN_HEIGHT = 800
+SCREEN_WIDTH = 200
+SCREEN_HEIGHT = 200
 SCREEN_DIMENSIONS = (SCREEN_WIDTH, SCREEN_HEIGHT)
 
 NUM_ROWS = SCREEN_HEIGHT // TILE_HEIGHT
@@ -19,7 +21,8 @@ print(NUM_COLS)
 NUM_TILES = NUM_ROWS * NUM_COLS
 print(NUM_TILES)
 
-NUM_MINES = NUM_TILES // 8
+# NUM_MINES = NUM_TILES // 8
+NUM_MINES = 5
 print(NUM_MINES)
 
 FONT_SIZE = 21
@@ -96,6 +99,8 @@ class Minesweeper:
                 tile_row.append(new_tile)
             self.board.append(tile_row)
 
+        self.revealed_tiles = set()
+        self.tiles_needed = set()
         self.lay_mines()
         self.calculate_mine_proximities()
         for i in range(NUM_ROWS):
@@ -151,14 +156,18 @@ class Minesweeper:
                             self.board[check_row][check_col].proximity += 1
                             self.board[check_row][check_col].label = \
                                 pg.font.Font.render(self.NUMBER_FONT, str(self.board[check_row][check_col].proximity), False, 'blue')
+                else:
+                    self.tiles_needed.add((i, j))
 
     def handle_tile_selection(self, row, col):
         if self.board[row][col].proximity == 0:
             selection = self.get_selection_span(row, col)
             for selected_tile in selection:
                 self.board[selected_tile[0]][selected_tile[1]].is_revealed = True
+                self.revealed_tiles.add((selected_tile[0], selected_tile[1]))
         else:
             self.board[row][col].is_revealed = True
+            self.revealed_tiles.add((row, col))
 
     def get_selection_span(self, row, col):
         frontier = [(row, col)]
@@ -178,6 +187,9 @@ class Minesweeper:
                             frontier.append((peek_tile_row, peek_tile_col))
                         selection_span.append((peek_tile_row, peek_tile_col))
         return selection_span
+
+    def check_for_win(self):
+        return len(self.revealed_tiles) == len(self.tiles_needed)
 
     def is_pos_within_board(self, row, col, board):
         if 0 <= row < len(board) and \
@@ -199,6 +211,8 @@ class Minesweeper:
                     self.is_running = False
                 elif event.type == pg.MOUSEBUTTONDOWN and not self.did_lose:
                     selected_row, selected_col = self.pos_to_tile_index(pg.mouse.get_pos())
+                    if not self.is_pos_within_board(selected_row, selected_col, self.board):
+                        continue
                     selected_tile = self.board[selected_row][selected_col]
                     if not selected_tile.is_revealed:
                         print(selected_tile)
@@ -208,13 +222,15 @@ class Minesweeper:
                                 self.show_mines()
                             elif not selected_tile.is_flagged:
                                 self.handle_tile_selection(selected_row, selected_col)
+                            if self.check_for_win():
+                                print('You won!')
                         if event.button == 3:
                             if selected_tile.is_flagged:
                                 selected_tile.set_flag(False)
                                 selected_tile.label = None
                             else:
                                 selected_tile.set_flag(True)
-                                selected_tile.label = pg.font.Font.render(self.FLAG_FONT, 'F', False, 'red')
+                                selected_tile.label = pg.font.Font.render(self.FLAG_FONT, 'F', False, 'yellow')
 
             self.draw_tiles()
             self.screen.blit(self.background, (0, 0))
