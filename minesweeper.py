@@ -47,7 +47,7 @@ class Tile():
         self.left_draw_pt = col * TILE_WIDTH
 
         self.label_left_draw_pt = self.left_draw_pt + (TILE_WIDTH // 4)
-        self.label_top_draw_pt = self.top_draw_pt + (TILE_HEIGHT // 8)
+        self.label_top_draw_pt = self.top_draw_pt + (TILE_HEIGHT // 12)
         self.label_draw_loc = (self.label_left_draw_pt, self.label_top_draw_pt)
 
         self.is_mine = False
@@ -101,11 +101,16 @@ class Minesweeper:
                 if not self.board[i][j].is_revealed:
                     # Draw Tile
                     pg.draw.rect(self.background, 'gray', self.board[i][j].render_rect)
+                else:
+                    if self.board[i][j].is_mine:
+                        pg.draw.rect(self.background, 'red', self.board[i][j].render_rect)
+                    elif self.board[i][j].proximity == 0:
+                        pg.draw.rect(self.background, 'black', self.board[i][j].render_rect)
 
     def draw_labels(self):
         for i in range(NUM_ROWS):
             for j in range(NUM_COLS):
-                if self.board[i][j].is_revealed:
+                if self.board[i][j].is_revealed and self.board[i][j].label:
                     self.screen.blit(self.board[i][j].label, self.board[i][j].label_draw_loc)
 
     def show_mines(self):
@@ -114,13 +119,12 @@ class Minesweeper:
                 if self.board[i][j].is_mine:
                     self.board[i][j].is_revealed = True
 
-
     def lay_mines(self):
         for _ in range(NUM_MINES):
             mine_row = random.randint(0, NUM_ROWS - 1)
             mine_col = random.randint(0, NUM_COLS - 1)
             self.board[mine_row][mine_col].is_mine = True
-            self.board[mine_row][mine_col].label = pg.font.Font.render(self.MINE_FONT, '*', False, 'red')
+            self.board[mine_row][mine_col].label = pg.font.Font.render(self.MINE_FONT, '*', False, 'black')
 
     def calculate_mine_proximities(self):
         for i in range(len(self.board)):
@@ -134,6 +138,32 @@ class Minesweeper:
                             self.board[check_row][check_col].proximity += 1
                             self.board[check_row][check_col].label = \
                                 pg.font.Font.render(self.NUMBER_FONT, str(self.board[check_row][check_col].proximity), False, 'blue')
+
+    def handle_tile_selection(self, row, col):
+        if self.board[row][col].proximity == 0:
+            selection = self.get_selection_span(row, col)
+            for selected_tile in selection:
+                self.board[selected_tile[0]][selected_tile[1]].is_revealed = True
+        else:
+            self.board[row][col].is_revealed = True
+
+    def get_selection_span(self, row, col):
+        frontier = [(row, col)]
+        selection_span = [(row, col)]
+        seen = set()
+        while frontier:
+            check_tile = frontier.pop()
+            seen.add(check_tile)
+            for direction in DIRECTIONS:
+                peek_tile_row = check_tile[0] + direction[0]
+                peek_tile_col = check_tile[1] + direction[1]
+                if self.is_pos_within_board(peek_tile_row, peek_tile_col, self.board) and \
+                        (peek_tile_row, peek_tile_col) not in seen:
+                    if not self.board[peek_tile_row][peek_tile_col].is_mine:
+                        if self.board[peek_tile_row][peek_tile_col].proximity == 0:
+                            frontier.append((peek_tile_row, peek_tile_col))
+                        selection_span.append((peek_tile_row, peek_tile_col))
+        return selection_span
 
     def is_pos_within_board(self, row, col, board):
         if 0 <= row < len(board) and \
@@ -159,6 +189,8 @@ class Minesweeper:
                     if self.board[selected_row][selected_col].is_mine:
                         self.did_lose = True
                         self.show_mines()
+                    else:
+                        self.handle_tile_selection(selected_row, selected_col)
 
             self.draw_tiles()
             self.screen.blit(self.background, (0, 0))
