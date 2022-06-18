@@ -51,12 +51,22 @@ class Tile():
         self.label_draw_loc = (self.label_left_draw_pt, self.label_top_draw_pt)
 
         self.is_mine = False
+        self.is_flagged = False
         self.proximity = 0
         self.is_revealed = False
 
         self.label = None
 
         self.render_rect = pg.Rect((self.left_draw_pt, self.top_draw_pt), TILE_DIMENSIONS)
+
+    def set_flag(self, is_flagged):
+        self.is_flagged = is_flagged
+        if is_flagged:
+            self.label_top_draw_pt = self.top_draw_pt + (TILE_HEIGHT // 32)
+            self.label_draw_loc = (self.label_left_draw_pt, self.label_top_draw_pt)
+        else:
+            self.label_top_draw_pt = self.top_draw_pt + (TILE_HEIGHT // 12)
+            self.label_draw_loc = (self.label_left_draw_pt, self.label_top_draw_pt)
 
     def __str__(self):
         return f'TILE ({self.row}, {self.col}) \n \
@@ -71,6 +81,7 @@ class Minesweeper:
         pg.display.set_caption("Minesweeper")
 
         self.NUMBER_FONT = pg.font.SysFont("arial", 14)
+        self.FLAG_FONT = pg.font.SysFont("arial", 18)
         self.MINE_FONT = pg.font.SysFont("arial", 21)
 
         self.screen = pg.display.set_mode(SCREEN_DIMENSIONS)
@@ -110,8 +121,10 @@ class Minesweeper:
     def draw_labels(self):
         for i in range(NUM_ROWS):
             for j in range(NUM_COLS):
-                if self.board[i][j].is_revealed and self.board[i][j].label:
-                    self.screen.blit(self.board[i][j].label, self.board[i][j].label_draw_loc)
+                if self.board[i][j].label:
+                    if self.board[i][j].is_revealed or self.board[i][j].is_flagged:
+                        self.screen.blit(self.board[i][j].label, self.board[i][j].label_draw_loc)
+
 
     def show_mines(self):
         for i in range(NUM_ROWS):
@@ -159,7 +172,8 @@ class Minesweeper:
                 peek_tile_col = check_tile[1] + direction[1]
                 if self.is_pos_within_board(peek_tile_row, peek_tile_col, self.board) and \
                         (peek_tile_row, peek_tile_col) not in seen:
-                    if not self.board[peek_tile_row][peek_tile_col].is_mine:
+                    if not self.board[peek_tile_row][peek_tile_col].is_mine and \
+                            not self.board[peek_tile_row][peek_tile_col].is_flagged:
                         if self.board[peek_tile_row][peek_tile_col].proximity == 0:
                             frontier.append((peek_tile_row, peek_tile_col))
                         selection_span.append((peek_tile_row, peek_tile_col))
@@ -185,12 +199,22 @@ class Minesweeper:
                     self.is_running = False
                 elif event.type == pg.MOUSEBUTTONDOWN and not self.did_lose:
                     selected_row, selected_col = self.pos_to_tile_index(pg.mouse.get_pos())
-                    print(self.board[selected_row][selected_col])
-                    if self.board[selected_row][selected_col].is_mine:
-                        self.did_lose = True
-                        self.show_mines()
-                    else:
-                        self.handle_tile_selection(selected_row, selected_col)
+                    selected_tile = self.board[selected_row][selected_col]
+                    if not selected_tile.is_revealed:
+                        print(selected_tile)
+                        if event.button == 1:
+                            if selected_tile.is_mine:
+                                self.did_lose = True
+                                self.show_mines()
+                            elif not selected_tile.is_flagged:
+                                self.handle_tile_selection(selected_row, selected_col)
+                        if event.button == 3:
+                            if selected_tile.is_flagged:
+                                selected_tile.set_flag(False)
+                                selected_tile.label = None
+                            else:
+                                selected_tile.set_flag(True)
+                                selected_tile.label = pg.font.Font.render(self.FLAG_FONT, 'F', False, 'red')
 
             self.draw_tiles()
             self.screen.blit(self.background, (0, 0))
